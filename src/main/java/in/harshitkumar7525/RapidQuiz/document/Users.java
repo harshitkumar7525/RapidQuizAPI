@@ -31,8 +31,6 @@ public class Users {
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 6, max = 16,
-            message = "Password length should be between 6 and 16 characters")
     private String password;
 
     @CreatedDate
