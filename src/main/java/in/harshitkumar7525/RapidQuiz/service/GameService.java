@@ -109,8 +109,11 @@ public class GameService {
         }
 
         game.setStatus(targetStatus);
-        if (targetStatus == GameSession.GameStatus.RUNNING && game.getStartedAt() == null) {
-            game.setStartedAt(LocalDateTime.now());
+        if (targetStatus == GameSession.GameStatus.RUNNING) {
+            if (game.getStartedAt() == null) {
+                game.setStartedAt(LocalDateTime.now());
+            }
+            game.setQuestionStartedAt(LocalDateTime.now());
         }
         if (targetStatus == GameSession.GameStatus.ENDED) {
             game.setEndedAt(LocalDateTime.now());
@@ -127,7 +130,7 @@ public class GameService {
         return saved;
     }
 
-    public GameSession advanceQuestion(String gameId, String hostId) {
+    public GameSession advanceQuestion(String gameId, String hostId, Integer explicitIndex) {
         GameSession game = gameSessionRepository.findById(gameId)
                 .orElseThrow(() -> new ResourceNotFoundException("Game not found"));
 
@@ -141,12 +144,13 @@ public class GameService {
         Quizzes quiz = quizRepository.findById(game.getQuizId())
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
 
-        int nextIndex = game.getCurrentQuestion() + 1;
-        if (nextIndex >= quiz.getQuestions().size()) {
+        int nextIndex = explicitIndex != null ? explicitIndex : game.getCurrentQuestion() + 1;
+        if (nextIndex < 0 || nextIndex >= quiz.getQuestions().size()) {
             throw new QuizValidationException("No more questions left in this quiz");
         }
 
         game.setCurrentQuestion(nextIndex);
+        game.setQuestionStartedAt(LocalDateTime.now());
         GameSession saved = gameSessionRepository.save(game);
 
         Question nextQuestion = quiz.getQuestions().get(nextIndex);

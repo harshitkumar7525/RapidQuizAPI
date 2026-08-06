@@ -29,6 +29,8 @@ public class GameSession {
 
     private Integer currentQuestion;
 
+    private LocalDateTime questionStartedAt;
+
     private LocalDateTime startedAt;
 
     private LocalDateTime endedAt;

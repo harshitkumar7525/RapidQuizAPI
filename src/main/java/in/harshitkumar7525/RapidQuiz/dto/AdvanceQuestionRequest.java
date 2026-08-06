@@ -12,4 +12,6 @@ public class AdvanceQuestionRequest {
 
     @NotBlank(message = "hostId is required")
     private String hostId;
+
+    private Integer index;
 }

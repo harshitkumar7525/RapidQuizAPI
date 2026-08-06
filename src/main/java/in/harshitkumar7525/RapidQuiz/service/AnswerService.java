@@ -17,6 +17,7 @@ import in.harshitkumar7525.RapidQuiz.websocket.GameBroadcastService;
 import in.harshitkumar7525.RapidQuiz.websocket.WSMessage;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -73,8 +74,7 @@ public class AnswerService {
 
         Question question = quiz.getQuestions().get(index);
         boolean isCorrect = question.getCorrectAnswer().equals(request.getAnswer());
-        int timeLimit = (question.getTimeLimit() != null && question.getTimeLimit() > 0) ? question.getTimeLimit() : 30;
-        int score = isCorrect ? 100 + timeLimit : 0;
+        int score = isCorrect ? scoreFor(question, game.getQuestionStartedAt()) : 0;
 
         Answer answer = new Answer();
         answer.setGameId(gameId);
@@ -98,5 +98,21 @@ public class AnswerService {
         )));
 
         return saved;
+    }
+
+    private int scoreFor(Question question, LocalDateTime questionStartedAt) {
+        int timeLimit = (question.getTimeLimit() != null && question.getTimeLimit() > 0) ? question.getTimeLimit() : 30;
+
+        double elapsedSeconds = 0.0;
+        if (questionStartedAt != null) {
+            elapsedSeconds = Duration.between(questionStartedAt, LocalDateTime.now()).toMillis() / 1000.0;
+            if (elapsedSeconds < 0) {
+                elapsedSeconds = 0;
+            }
+        }
+
+        double remaining = Math.max(0.0, timeLimit - elapsedSeconds);
+        int timeBonus = (int) (100.0 * remaining / timeLimit);
+        return 100 + timeBonus;
     }
 }

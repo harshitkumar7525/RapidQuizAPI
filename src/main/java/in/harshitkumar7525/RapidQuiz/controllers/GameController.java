@@ -53,7 +53,7 @@ public class GameController {
     @PatchMapping("/{gameId}/next-question")
     public ResponseEntity<GameStatusResponse> nextQuestion(@PathVariable String gameId,
                                                            @Valid @RequestBody AdvanceQuestionRequest request) {
-        GameSession game = gameService.advanceQuestion(gameId, request.getHostId());
+        GameSession game = gameService.advanceQuestion(gameId, request.getHostId(), request.getIndex());
         return ResponseEntity.ok(GameStatusResponse.from(game));
     }
 }
