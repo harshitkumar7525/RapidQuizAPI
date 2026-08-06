@@ -5,6 +5,7 @@ import in.harshitkumar7525.RapidQuiz.document.Participant;
 import in.harshitkumar7525.RapidQuiz.dto.AdvanceQuestionRequest;
 import in.harshitkumar7525.RapidQuiz.dto.CreateGameRequest;
 import in.harshitkumar7525.RapidQuiz.dto.CreateGameResponse;
+import in.harshitkumar7525.RapidQuiz.dto.GameDetailsResponse;
 import in.harshitkumar7525.RapidQuiz.dto.GameStatusResponse;
 import in.harshitkumar7525.RapidQuiz.dto.JoinGameRequest;
 import in.harshitkumar7525.RapidQuiz.dto.JoinGameResponse;
@@ -23,6 +24,11 @@ public class GameController {
 
     public GameController(GameService gameService) {
         this.gameService = gameService;
+    }
+
+    @GetMapping("/{gameId}")
+    public ResponseEntity<GameDetailsResponse> getDetails(@PathVariable String gameId) {
+        return ResponseEntity.ok(gameService.getDetails(gameId));
     }
 
     @PostMapping("/create")

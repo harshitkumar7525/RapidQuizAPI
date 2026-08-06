@@ -5,7 +5,9 @@ import in.harshitkumar7525.RapidQuiz.document.Participant;
 import in.harshitkumar7525.RapidQuiz.document.Question;
 import in.harshitkumar7525.RapidQuiz.document.Quizzes;
 import in.harshitkumar7525.RapidQuiz.dto.CreateGameRequest;
+import in.harshitkumar7525.RapidQuiz.dto.GameDetailsResponse;
 import in.harshitkumar7525.RapidQuiz.dto.JoinGameRequest;
+import in.harshitkumar7525.RapidQuiz.dto.ParticipantSummary;
 import in.harshitkumar7525.RapidQuiz.dto.QuestionBroadcastResponse;
 import in.harshitkumar7525.RapidQuiz.exception.ConflictException;
 import in.harshitkumar7525.RapidQuiz.exception.ForbiddenException;
@@ -21,8 +23,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class GameService {
@@ -152,6 +156,42 @@ public class GameService {
         ));
 
         return saved;
+    }
+
+    public GameDetailsResponse getDetails(String gameId) {
+        GameSession game = gameSessionRepository.findById(gameId)
+                .orElseThrow(() -> new ResourceNotFoundException("Game not found"));
+
+        Quizzes quiz = quizRepository.findById(game.getQuizId())
+                .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
+
+        List<ParticipantSummary> participants = participantRepository.findByGameId(gameId).stream()
+                .map(ParticipantSummary::from)
+                .collect(Collectors.toList());
+
+        QuestionBroadcastResponse currentQuestionData = null;
+        boolean questionActive = game.getStatus() == GameSession.GameStatus.RUNNING
+                || game.getStatus() == GameSession.GameStatus.PAUSED;
+        if (questionActive) {
+            int index = game.getCurrentQuestion();
+            if (index >= 0 && index < quiz.getQuestions().size()) {
+                currentQuestionData = QuestionBroadcastResponse.from(index, quiz.getQuestions().get(index));
+            }
+        }
+
+        return new GameDetailsResponse(
+                game.getId(),
+                game.getQuizId(),
+                game.getHostId(),
+                game.getRoomCode(),
+                game.getStatus(),
+                game.getCurrentQuestion(),
+                quiz.getQuestions().size(),
+                currentQuestionData,
+                participants,
+                game.getStartedAt(),
+                game.getEndedAt()
+        );
     }
 
     private String generateUniqueRoomCode() {
