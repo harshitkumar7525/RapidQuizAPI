@@ -4,8 +4,10 @@ import in.harshitkumar7525.RapidQuiz.document.GameSession;
 import in.harshitkumar7525.RapidQuiz.document.Participant;
 import in.harshitkumar7525.RapidQuiz.dto.CreateGameRequest;
 import in.harshitkumar7525.RapidQuiz.dto.CreateGameResponse;
+import in.harshitkumar7525.RapidQuiz.dto.GameStatusResponse;
 import in.harshitkumar7525.RapidQuiz.dto.JoinGameRequest;
 import in.harshitkumar7525.RapidQuiz.dto.JoinGameResponse;
+import in.harshitkumar7525.RapidQuiz.dto.UpdateGameStatusRequest;
 import in.harshitkumar7525.RapidQuiz.service.GameService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -32,5 +34,12 @@ public class GameController {
     public ResponseEntity<JoinGameResponse> join(@Valid @RequestBody JoinGameRequest request) {
         Participant participant = gameService.join(request);
         return ResponseEntity.ok(JoinGameResponse.from(participant));
+    }
+
+    @PatchMapping("/{gameId}/status")
+    public ResponseEntity<GameStatusResponse> updateStatus(@PathVariable String gameId,
+                                                           @Valid @RequestBody UpdateGameStatusRequest request) {
+        GameSession game = gameService.updateStatus(gameId, request.getHostId(), request.getStatus());
+        return ResponseEntity.ok(GameStatusResponse.from(game));
     }
 }

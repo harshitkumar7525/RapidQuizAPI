@@ -12,26 +12,44 @@ import in.harshitkumar7525.RapidQuiz.exception.ResourceNotFoundException;
 import in.harshitkumar7525.RapidQuiz.repository.GameSessionRepository;
 import in.harshitkumar7525.RapidQuiz.repository.ParticipantRepository;
 import in.harshitkumar7525.RapidQuiz.repository.QuizRepository;
+import in.harshitkumar7525.RapidQuiz.websocket.GameBroadcastService;
+import in.harshitkumar7525.RapidQuiz.websocket.WSMessage;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 public class GameService {
+
+    /** Allowed status transitions, mirroring the Go backend's waiting -> running -> paused/ended flow. */
+    private static final Map<GameSession.GameStatus, Set<GameSession.GameStatus>> ALLOWED_TRANSITIONS = new EnumMap<>(GameSession.GameStatus.class);
+    static {
+        ALLOWED_TRANSITIONS.put(GameSession.GameStatus.WAITING, EnumSet.of(GameSession.GameStatus.RUNNING));
+        ALLOWED_TRANSITIONS.put(GameSession.GameStatus.RUNNING, EnumSet.of(GameSession.GameStatus.PAUSED, GameSession.GameStatus.ENDED));
+        ALLOWED_TRANSITIONS.put(GameSession.GameStatus.PAUSED, EnumSet.of(GameSession.GameStatus.RUNNING, GameSession.GameStatus.ENDED));
+        ALLOWED_TRANSITIONS.put(GameSession.GameStatus.ENDED, EnumSet.noneOf(GameSession.GameStatus.class));
+    }
 
     private final GameSessionRepository gameSessionRepository;
     private final ParticipantRepository participantRepository;
     private final QuizRepository quizRepository;
     private final RoomCodeGenerator roomCodeGenerator;
+    private final GameBroadcastService gameBroadcastService;
 
     public GameService(GameSessionRepository gameSessionRepository,
                        ParticipantRepository participantRepository,
                        QuizRepository quizRepository,
-                       RoomCodeGenerator roomCodeGenerator) {
+                       RoomCodeGenerator roomCodeGenerator,
+                       GameBroadcastService gameBroadcastService) {
         this.gameSessionRepository = gameSessionRepository;
         this.participantRepository = participantRepository;
         this.quizRepository = quizRepository;
         this.roomCodeGenerator = roomCodeGenerator;
+        this.gameBroadcastService = gameBroadcastService;
     }
 
     public GameSession create(CreateGameRequest request) {
@@ -69,6 +87,39 @@ public class GameService {
         participant.setName(request.getName());
         participant.setJoinedAt(LocalDateTime.now());
         return participantRepository.save(participant);
+    }
+
+    public GameSession updateStatus(String gameId, String hostId, GameSession.GameStatus targetStatus) {
+        GameSession game = gameSessionRepository.findById(gameId)
+                .orElseThrow(() -> new ResourceNotFoundException("Game not found"));
+
+        if (!game.getHostId().equals(hostId)) {
+            throw new ForbiddenException("Only the host can change the game status");
+        }
+
+        Set<GameSession.GameStatus> allowed = ALLOWED_TRANSITIONS.getOrDefault(game.getStatus(), EnumSet.noneOf(GameSession.GameStatus.class));
+        if (!allowed.contains(targetStatus)) {
+            throw new QuizValidationException(
+                    "Cannot transition game from " + game.getStatus() + " to " + targetStatus);
+        }
+
+        game.setStatus(targetStatus);
+        if (targetStatus == GameSession.GameStatus.RUNNING && game.getStartedAt() == null) {
+            game.setStartedAt(LocalDateTime.now());
+        }
+        if (targetStatus == GameSession.GameStatus.ENDED) {
+            game.setEndedAt(LocalDateTime.now());
+        }
+
+        GameSession saved = gameSessionRepository.save(game);
+
+        gameBroadcastService.broadcast(saved.getRoomCode(), new WSMessage("game_status", Map.of(
+                "gameId", saved.getId(),
+                "status", saved.getStatus(),
+                "currentQuestion", saved.getCurrentQuestion()
+        )));
+
+        return saved;
     }
 
     private String generateUniqueRoomCode() {
