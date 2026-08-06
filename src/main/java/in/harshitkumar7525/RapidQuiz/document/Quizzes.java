@@ -14,11 +14,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * createdBy is a plain String for now (no auth yet) -- set manually by
- * QuizService. Do NOT add @CreatedBy here until auth lands: that annotation
- * needs an AuditorAware bean and would fight with the manual set.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

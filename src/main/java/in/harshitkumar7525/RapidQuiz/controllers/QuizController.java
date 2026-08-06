@@ -29,7 +29,6 @@ public class QuizController {
         return ResponseEntity.status(HttpStatus.CREATED).body(QuizResponse.from(created));
     }
 
-    // Temporary until auth: pass ?createdBy=<userId> to list "your" quizzes.
     @GetMapping
     public ResponseEntity<List<QuizResponse>> list(@RequestParam String createdBy) {
         List<QuizResponse> quizzes = quizService.findByCreatedBy(createdBy).stream()
@@ -43,7 +42,6 @@ public class QuizController {
         return ResponseEntity.ok(QuizResponse.from(quizService.findById(quizId)));
     }
 
-    // Temporary until auth: requesterId identifies the caller for the ownership check.
     @PatchMapping("/{quizId}")
     public ResponseEntity<QuizResponse> update(@PathVariable String quizId,
                                                @RequestParam String requesterId,

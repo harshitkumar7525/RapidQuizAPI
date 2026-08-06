@@ -63,7 +63,6 @@ public class QuizService {
         quizRepository.deleteById(id);
     }
 
-    // correct_answer must exactly match one of options -- same rule as the Go backend.
     private void validateQuestions(List<QuestionRequest> questions) {
         for (QuestionRequest q : questions) {
             if (!q.getOptions().contains(q.getCorrectAnswer())) {
