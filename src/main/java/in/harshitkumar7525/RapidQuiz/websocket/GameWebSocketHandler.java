@@ -28,7 +28,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
         String roomCode = (String) session.getAttributes().get(ROOM_CODE_ATTR);
-        broadcast(roomCode, message, session);
+        roomRegistry.broadcast(roomCode, message, session);
     }
 
     @Override
@@ -43,17 +43,6 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     public void handleTransportError(WebSocketSession session, Throwable exception) throws IOException {
         if (session.isOpen()) {
             session.close(CloseStatus.SERVER_ERROR);
-        }
-    }
-
-    private void broadcast(String roomCode, TextMessage message, WebSocketSession sender) {
-        for (WebSocketSession peer : roomRegistry.sessionsIn(roomCode)) {
-            if (peer.equals(sender) || !peer.isOpen()) continue;
-            try {
-                peer.sendMessage(message);
-            } catch (IOException e) {
-                // Best-effort broadcast: one bad peer shouldn't break the fan-out to the rest of the room.
-            }
         }
     }
 }
