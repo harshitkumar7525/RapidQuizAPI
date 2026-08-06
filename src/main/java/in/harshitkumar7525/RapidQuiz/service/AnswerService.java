@@ -58,6 +58,10 @@ public class AnswerService {
         Participant participant = participantRepository.findById(request.getParticipantId())
                 .orElseThrow(() -> new ResourceNotFoundException("Participant not found"));
 
+        if (!participant.getGameId().equals(gameId)) {
+            throw new ResourceNotFoundException("Participant not found");
+        }
+
         int index = request.getQuestionIndex();
         if (index < 0 || index >= quiz.getQuestions().size()) {
             throw new QuizValidationException("Invalid question index");
