@@ -2,9 +2,11 @@ package in.harshitkumar7525.RapidQuiz.service;
 
 import in.harshitkumar7525.RapidQuiz.document.GameSession;
 import in.harshitkumar7525.RapidQuiz.document.Participant;
+import in.harshitkumar7525.RapidQuiz.document.Question;
 import in.harshitkumar7525.RapidQuiz.document.Quizzes;
 import in.harshitkumar7525.RapidQuiz.dto.CreateGameRequest;
 import in.harshitkumar7525.RapidQuiz.dto.JoinGameRequest;
+import in.harshitkumar7525.RapidQuiz.dto.QuestionBroadcastResponse;
 import in.harshitkumar7525.RapidQuiz.exception.ConflictException;
 import in.harshitkumar7525.RapidQuiz.exception.ForbiddenException;
 import in.harshitkumar7525.RapidQuiz.exception.QuizValidationException;
@@ -25,7 +27,6 @@ import java.util.Set;
 @Service
 public class GameService {
 
-    /** Allowed status transitions, mirroring the Go backend's waiting -> running -> paused/ended flow. */
     private static final Map<GameSession.GameStatus, Set<GameSession.GameStatus>> ALLOWED_TRANSITIONS = new EnumMap<>(GameSession.GameStatus.class);
     static {
         ALLOWED_TRANSITIONS.put(GameSession.GameStatus.WAITING, EnumSet.of(GameSession.GameStatus.RUNNING));
@@ -118,6 +119,37 @@ public class GameService {
                 "status", saved.getStatus(),
                 "currentQuestion", saved.getCurrentQuestion()
         )));
+
+        return saved;
+    }
+
+    public GameSession advanceQuestion(String gameId, String hostId) {
+        GameSession game = gameSessionRepository.findById(gameId)
+                .orElseThrow(() -> new ResourceNotFoundException("Game not found"));
+
+        if (!game.getHostId().equals(hostId)) {
+            throw new ForbiddenException("Only the host can advance the question");
+        }
+        if (game.getStatus() != GameSession.GameStatus.RUNNING) {
+            throw new QuizValidationException("Game must be running to advance the question");
+        }
+
+        Quizzes quiz = quizRepository.findById(game.getQuizId())
+                .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
+
+        int nextIndex = game.getCurrentQuestion() + 1;
+        if (nextIndex >= quiz.getQuestions().size()) {
+            throw new QuizValidationException("No more questions left in this quiz");
+        }
+
+        game.setCurrentQuestion(nextIndex);
+        GameSession saved = gameSessionRepository.save(game);
+
+        Question nextQuestion = quiz.getQuestions().get(nextIndex);
+        gameBroadcastService.broadcast(saved.getRoomCode(), new WSMessage(
+                "next_question",
+                QuestionBroadcastResponse.from(nextIndex, nextQuestion)
+        ));
 
         return saved;
     }

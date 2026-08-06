@@ -2,6 +2,7 @@ package in.harshitkumar7525.RapidQuiz.controllers;
 
 import in.harshitkumar7525.RapidQuiz.document.GameSession;
 import in.harshitkumar7525.RapidQuiz.document.Participant;
+import in.harshitkumar7525.RapidQuiz.dto.AdvanceQuestionRequest;
 import in.harshitkumar7525.RapidQuiz.dto.CreateGameRequest;
 import in.harshitkumar7525.RapidQuiz.dto.CreateGameResponse;
 import in.harshitkumar7525.RapidQuiz.dto.GameStatusResponse;
@@ -40,6 +41,13 @@ public class GameController {
     public ResponseEntity<GameStatusResponse> updateStatus(@PathVariable String gameId,
                                                            @Valid @RequestBody UpdateGameStatusRequest request) {
         GameSession game = gameService.updateStatus(gameId, request.getHostId(), request.getStatus());
+        return ResponseEntity.ok(GameStatusResponse.from(game));
+    }
+
+    @PatchMapping("/{gameId}/next-question")
+    public ResponseEntity<GameStatusResponse> nextQuestion(@PathVariable String gameId,
+                                                           @Valid @RequestBody AdvanceQuestionRequest request) {
+        GameSession game = gameService.advanceQuestion(gameId, request.getHostId());
         return ResponseEntity.ok(GameStatusResponse.from(game));
     }
 }
