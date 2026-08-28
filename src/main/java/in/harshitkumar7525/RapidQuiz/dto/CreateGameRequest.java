@@ -12,7 +12,4 @@ public class CreateGameRequest {
 
     @NotBlank(message = "quizId is required")
     private String quizId;
-
-    @NotBlank(message = "hostId is required")
-    private String hostId;
 }

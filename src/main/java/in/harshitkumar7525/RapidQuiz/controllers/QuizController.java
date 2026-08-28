@@ -24,14 +24,15 @@ public class QuizController {
     }
 
     @PostMapping
-    public ResponseEntity<QuizResponse> create(@Valid @RequestBody CreateQuizRequest request) {
-        Quizzes created = quizService.create(request);
+    public ResponseEntity<QuizResponse> create(@RequestAttribute("userId") String userId,
+                                               @Valid @RequestBody CreateQuizRequest request) {
+        Quizzes created = quizService.create(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(QuizResponse.from(created));
     }
 
     @GetMapping
-    public ResponseEntity<List<QuizResponse>> list(@RequestParam String createdBy) {
-        List<QuizResponse> quizzes = quizService.findByCreatedBy(createdBy).stream()
+    public ResponseEntity<List<QuizResponse>> list(@RequestAttribute("userId") String userId) {
+        List<QuizResponse> quizzes = quizService.findByCreatedBy(userId).stream()
                 .map(QuizResponse::from)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(quizzes);
@@ -44,16 +45,16 @@ public class QuizController {
 
     @PatchMapping("/{quizId}")
     public ResponseEntity<QuizResponse> update(@PathVariable String quizId,
-                                               @RequestParam String requesterId,
+                                               @RequestAttribute("userId") String userId,
                                                @RequestBody CreateQuizRequest request) {
-        Quizzes updated = quizService.update(quizId, requesterId, request);
+        Quizzes updated = quizService.update(quizId, userId, request);
         return ResponseEntity.ok(QuizResponse.from(updated));
     }
 
     @DeleteMapping("/{quizId}")
     public ResponseEntity<Map<String, String>> delete(@PathVariable String quizId,
-                                                      @RequestParam String requesterId) {
-        quizService.delete(quizId, requesterId);
+                                                      @RequestAttribute("userId") String userId) {
+        quizService.delete(quizId, userId);
         return ResponseEntity.ok(Map.of("message", "quiz deleted successfully"));
     }
 }

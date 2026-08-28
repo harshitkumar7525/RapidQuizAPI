@@ -1,14 +1,15 @@
 package in.harshitkumar7525.RapidQuiz.security;
 
+import java.io.IOException;
+
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import in.harshitkumar7525.RapidQuiz.exception.UnauthorizedException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -35,6 +36,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
         if (path.equals("/games/create")) {
             return "POST".equalsIgnoreCase(method);
+        }
+        if (path.matches("^/games/[^/]+/status$")) {
+            return "PATCH".equalsIgnoreCase(method);
+        }
+        if (path.matches("^/games/[^/]+/next-question$")) {
+            return "PATCH".equalsIgnoreCase(method);
+        }
+        if (path.matches("^/games/[^/]+$")) {
+            return "GET".equalsIgnoreCase(method);
         }
         return false;
     }

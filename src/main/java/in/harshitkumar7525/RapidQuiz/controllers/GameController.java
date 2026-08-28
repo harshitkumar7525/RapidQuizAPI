@@ -32,8 +32,9 @@ public class GameController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<CreateGameResponse> create(@Valid @RequestBody CreateGameRequest request) {
-        GameSession game = gameService.create(request);
+    public ResponseEntity<CreateGameResponse> create(@RequestAttribute("userId") String userId,
+                                                      @Valid @RequestBody CreateGameRequest request) {
+        GameSession game = gameService.create(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(CreateGameResponse.from(game));
     }
 
@@ -45,15 +46,17 @@ public class GameController {
 
     @PatchMapping("/{gameId}/status")
     public ResponseEntity<GameStatusResponse> updateStatus(@PathVariable String gameId,
+                                                           @RequestAttribute("userId") String userId,
                                                            @Valid @RequestBody UpdateGameStatusRequest request) {
-        GameSession game = gameService.updateStatus(gameId, request.getHostId(), request.getStatus());
+        GameSession game = gameService.updateStatus(gameId, userId, request.getStatus());
         return ResponseEntity.ok(GameStatusResponse.from(game));
     }
 
     @PatchMapping("/{gameId}/next-question")
     public ResponseEntity<GameStatusResponse> nextQuestion(@PathVariable String gameId,
+                                                           @RequestAttribute("userId") String userId,
                                                            @Valid @RequestBody AdvanceQuestionRequest request) {
-        GameSession game = gameService.advanceQuestion(gameId, request.getHostId(), request.getIndex());
+        GameSession game = gameService.advanceQuestion(gameId, userId, request.getIndex());
         return ResponseEntity.ok(GameStatusResponse.from(game));
     }
 }

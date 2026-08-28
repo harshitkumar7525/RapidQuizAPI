@@ -19,9 +19,6 @@ public class CreateQuizRequest {
 
     private String description;
 
-    @NotBlank(message = "createdBy is required")
-    private String createdBy;
-
     @NotEmpty(message = "At least 1 question is required")
     @Valid
     private List<QuestionRequest> questions;

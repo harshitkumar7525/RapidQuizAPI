@@ -1,5 +1,10 @@
 package in.harshitkumar7525.RapidQuiz.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import in.harshitkumar7525.RapidQuiz.document.Question;
 import in.harshitkumar7525.RapidQuiz.document.Quizzes;
 import in.harshitkumar7525.RapidQuiz.dto.CreateQuizRequest;
@@ -7,10 +12,6 @@ import in.harshitkumar7525.RapidQuiz.dto.QuestionRequest;
 import in.harshitkumar7525.RapidQuiz.exception.QuizValidationException;
 import in.harshitkumar7525.RapidQuiz.exception.ResourceNotFoundException;
 import in.harshitkumar7525.RapidQuiz.repository.QuizRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class QuizService {
@@ -21,13 +22,13 @@ public class QuizService {
         this.quizRepository = quizRepository;
     }
 
-    public Quizzes create(CreateQuizRequest request) {
+    public Quizzes create(String createdBy, CreateQuizRequest request) {
         validateQuestions(request.getQuestions());
 
         Quizzes quiz = new Quizzes();
         quiz.setTitle(request.getTitle());
         quiz.setDescription(request.getDescription());
-        quiz.setCreatedBy(request.getCreatedBy());
+        quiz.setCreatedBy(createdBy);
         quiz.setQuestions(toQuestions(request.getQuestions()));
         return quizRepository.save(quiz);
     }

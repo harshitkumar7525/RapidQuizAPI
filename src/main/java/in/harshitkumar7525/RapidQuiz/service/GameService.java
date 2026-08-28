@@ -1,5 +1,15 @@
 package in.harshitkumar7525.RapidQuiz.service;
 
+import java.time.LocalDateTime;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import in.harshitkumar7525.RapidQuiz.document.GameSession;
 import in.harshitkumar7525.RapidQuiz.document.Participant;
 import in.harshitkumar7525.RapidQuiz.document.Question;
@@ -18,15 +28,6 @@ import in.harshitkumar7525.RapidQuiz.repository.ParticipantRepository;
 import in.harshitkumar7525.RapidQuiz.repository.QuizRepository;
 import in.harshitkumar7525.RapidQuiz.websocket.GameBroadcastService;
 import in.harshitkumar7525.RapidQuiz.websocket.WSMessage;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class GameService {
@@ -57,17 +58,17 @@ public class GameService {
         this.gameBroadcastService = gameBroadcastService;
     }
 
-    public GameSession create(CreateGameRequest request) {
+        public GameSession create(String hostId, CreateGameRequest request) {
         Quizzes quiz = quizRepository.findById(request.getQuizId())
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz does not exist"));
 
-        if (!quiz.getCreatedBy().equals(request.getHostId())) {
+        if (!quiz.getCreatedBy().equals(hostId)) {
             throw new ForbiddenException("Only the quiz creator can start a game session for it");
         }
 
         GameSession game = new GameSession();
         game.setQuizId(quiz.getId());
-        game.setHostId(request.getHostId());
+        game.setHostId(hostId);
         game.setRoomCode(generateUniqueRoomCode());
         game.setStatus(GameSession.GameStatus.WAITING);
         game.setCurrentQuestion(0);
